@@ -1,2 +1,2 @@
 # Observability-with-Grafana
-published by Packt
+Observability with Grafana, published by Packt

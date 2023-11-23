@@ -227,6 +227,7 @@ config:
           - otlp
         processors:
           - memory_limiter
+          - transform
           - resource
           - batch
         exporters:

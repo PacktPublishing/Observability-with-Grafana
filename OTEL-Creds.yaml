@@ -1,0 +1,39 @@
+config:
+
+  extensions:
+    basicauth/logs:
+      client_auth:
+        username: <LOG_USERNAME>
+        password: <LOG_PASSWORD>
+    basicauth/metrics:
+      client_auth:
+        username: <METRIC_USERNAME>
+        password: <METRIC_PASSWORD>
+    basicauth/traces:
+      client_auth:
+        username: <TRACE_USERNAME>
+        password: <TRACE_PASSWORD>
+
+  exporters:
+    loki:
+      endpoint: <LOG_ENDPOINT>
+      auth:
+        authenticator: basicauth/logs
+    prometheusremotewrite:
+      resource_to_telemetry_conversion: 
+        enabled: true
+      endpoint: <METRIC_ENDPOINT>
+      auth:
+        authenticator: basicauth/metrics
+    otlp:
+      endpoint: <TRACE_ENDPOINT>
+      auth:
+        authenticator: basicauth/traces
+    ## This section allows for debugging the OTEL Collector
+    ## Verbosity can be set to (detailed|normal|basic)
+    debug/logs:
+      verbosity: basic
+    debug/metrics:
+      verbosity: basic
+    debug/traces:
+      verbosity: basic

@@ -1,0 +1,205 @@
+# Default values for the opentelemetry-collector: https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-collector/values.yaml
+mode: deployment
+
+presets:
+  logsCollection:
+    enabled: true
+    includeCollectorLogs: false
+  kubernetesAttributes:
+    enabled: true
+  kubernetesEvents:
+    enabled: true
+  clusterMetrics:
+    enabled: true
+  kubeletMetrics:
+    enabled: true
+  hostMetrics:
+    enabled: true
+resources:
+  limits:
+    cpu: 256m
+    memory: 512Mi
+service:
+  type: ClusterIP
+ports:
+  metrics: 
+    enabled: true
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8888"
+  opentelemetry_community_demo: "true"
+
+config:
+  extensions:
+    health_check:
+      check_collector_pipeline:
+        enabled: false
+    memory_ballast: {}
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: ${env:MY_POD_IP}:4317
+        http:
+          endpoint: ${env:MY_POD_IP}:4318
+          # Since this collector needs to receive data from the web, enable cors for all origins
+          # `allowed_origins` can be refined for your deployment domain
+          cors:
+            allowed_origins:
+              - "http://*"
+              - "https://*"
+
+    k8s_cluster:
+      collection_interval: 60s
+    kubeletstats:
+      collection_interval: 60s
+    hostmetrics:
+      collection_interval: 60s
+    prometheus:
+      config:
+        scrape_configs:
+          - job_name: 'opentelemetry-collector'
+            scrape_interval: 60s
+            static_configs:
+              - targets:
+                  - owg-opentelemetry-collector:8888
+
+  processors:
+    memory_limiter:
+      check_interval: 30s
+      limit_percentage: 50
+      spike_limit_percentage: 30
+    filter/ottl:
+      error_mode: ignore
+      metrics:
+        metric:
+          # FIXME: remove when this issue is resolved: https://github.com/open-telemetry/opentelemetry-java/issues/4834
+          - 'name == "queueSize"'
+          # FIXME: remove when a Metrics View is implemented in the checkout and productcatalog components
+          # or when this issue is resolved: https://github.com/open-telemetry/opentelemetry-go-contrib/issues/3071
+          - 'name == "rpc.server.duration"'
+    transform:
+      metric_statements:
+        - context: metric
+          statements:
+            # FIXME: remove when this issue is resolved: https://github.com/open-telemetry/opentelemetry-java/issues/4834
+            - set(description, "") where name == "queueSize"
+            # FIXME: remove when these 2 issues are resolved:
+            # Java: https://github.com/open-telemetry/opentelemetry-java-instrumentation/issues/9478
+            # Go: https://github.com/open-telemetry/opentelemetry-go-contrib/issues/4301
+            - set(description, "") where name == "rpc.server.duration"
+            # FIXME: remove when this issue is resolved: https://github.com/open-telemetry/opentelemetry-python-contrib/issues/1958
+            - set(description, "") where name == "http.client.duration"
+
+    resource:
+      attributes:
+      - key: service.instance.id
+        from_attribute: k8s.pod.uid
+        action: insert
+
+    k8sattributes/labels:
+      auth_type: "serviceAccount"
+      passthrough: false
+      pod_association:
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.name
+        - sources:
+          - from: resource_attribute
+            name: k8s.namespace.name
+        - sources:
+          - from: connection
+      extract:
+        metadata:
+          - k8s.pod.name
+          - k8s.container.name
+          - k8s.deployment.name
+          - k8s.node.name
+          - k8s.namespace.name
+          - k8s.pod.start_time
+          - k8s.replicaset.name
+          - k8s.daemonset.name
+        labels:
+          - tag_name: $$1
+            key_regex: app.kubernetes.io/(.*)
+            from: pod
+
+    resource/loki_add_hints:
+      attributes:
+        - action: upsert
+          key: k8s_cluster_name
+          from_attribute: k8s.cluster.name
+        - action: upsert
+          key: k8s_namespace_name
+          from_attribute: k8s.namespace.name
+        - action: upsert
+          key: k8s_container_name
+          from_attribute: k8s.container.name
+        - action: upsert
+          key: k8s_deployment_name
+          from_attribute: k8s.deployment.name
+        - action: upsert
+          key: k8s_node_name
+          from_attribute: k8s.node.name
+        - action: insert
+          key: loki.resource.labels
+          value: "\
+            k8s_cluster_name,\
+            k8s_namespace_name,\
+            k8s_container_name,\
+            k8s_node_name,\
+            component,\
+            instance,\
+            name"
+
+    attributes/loki_add_hints:
+      actions:
+        - action: upsert
+          key: log_iostream
+          from_attribute: log.iostream
+        - action: insert
+          key: loki.attribute.labels
+          value: "log_iostream"
+
+  service:
+    extensions:
+      - basicauth/logs
+      - basicauth/metrics
+      - basicauth/traces
+      - health_check
+
+    pipelines:
+      logs:
+        receivers: 
+          - filelog
+          - otlp
+        processors:
+          - memory_limiter
+          - k8sattributes/labels
+          - resource/loki_add_hints
+          - attributes/loki_add_hints
+        exporters: 
+          - loki
+          - debug/logs
+
+      metrics:
+        receivers:
+          - otlp
+        processors:
+          - memory_limiter
+          - filter/ottl
+          - transform
+          - batch
+        exporters:
+          - prometheusremotewrite
+          - debug/metrics
+
+      traces:
+        receivers:
+          - otlp
+        processors:
+          - memory_limiter
+          - batch
+        exporters:
+          - otlp
+          - debug/traces

@@ -1,3 +1,5 @@
+## Setup Instructions
+
 ### Chapter 6
 
 The changes to the OpenTelemetry collector for chapter 6 will collect metrics generated from the trace data collected, and add additional information used by Tempo to display service maps.

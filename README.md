@@ -47,8 +47,6 @@ With the following software and hardware list you can run all code files present
 | 1-13 | Kubernetes v1.26 | Either Windows, macOS, or Linux with dual CPU |
 | 1-13 | Docker v23 | Either Windows, macOS, or Linux with dual CPU |
 
-We also provide a PDF file that has color images of the screenshots/diagrams used in this book. [Click here to download it]().
-
 ### Related products
 * AWS Observability Handbook [[Packt]](https://www.packtpub.com/product/aws-observability-handbook/9781804616710?utm_source=github&utm_medium=repository&utm_campaign=9781804616710) [[Amazon]](https://www.amazon.com/dp/1804616710)
 

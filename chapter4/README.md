@@ -1,3 +1,5 @@
+## Setup Instructions
+
 ### Chapter 4
 
 The changes to the OpenTelemetry collector for chapter 4 will add a lot of additional labels to logs, and collect Kubernetes events from the cluster.

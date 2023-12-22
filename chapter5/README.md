@@ -1,3 +1,5 @@
+## Setup Instructions
+
 ### Chapter 5
 
 The changes to the OpenTelemetry collector for chapter 5 will add a lot of additional metrics, from the Kubernetes cluster, the Kubelet running on a node, the host itself and the collector too.

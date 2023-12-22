@@ -26,7 +26,7 @@ alt="https://www.packtpub.com/" border="5" /></a>
 
 ## Instructions and Navigations
 All of the code is organized into folders. For example, chapter3.
-All the setup instructions can found in READMEs placed in the respective chapter folders.
+**All the setup instructions can found in READMEs placed in the respective chapter folders.**
 The code will look like the following:
 ```
 histogram_quantile(

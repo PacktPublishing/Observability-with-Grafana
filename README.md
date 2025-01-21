@@ -1,3 +1,6 @@
+
+<b><p align='center'>[![Packt Sale](https://static.packt-cdn.com/assets/images/image.jpeg)](https://www.packtpub.com/)</p></b>Get this book on sale at [Packt](https://www.packtpub.com/).
+
 # Observability with Grafana
 
 <a href="https://www.packtpub.com/product/observability-with-grafana/9781803248004?utm_source=github&utm_medium=repository&utm_campaign=9781803248004"><img src="https://github.com/PacktPublishing/Observability-with-Grafana/blob/main/Cover%20(1).jpg" alt="" height="256px" align="right"></a>
